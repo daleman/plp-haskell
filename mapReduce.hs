@@ -8,7 +8,18 @@ type Dict k v = [(k,v)]
 
 -- Ejercicio 1
 belongs :: Eq k => k -> Dict k v -> Bool
-belongs = undefined
+
+-- Resolucion 1a : Función 'belongs' implementada con foldr. Se le pasa la función 'comparar'
+	-- definida a continuación y el valor False como caso base.
+belongs c = foldr (comparar c) False
+
+	-- Función auxiliar 'comparar' utilizada para 'belongs'. Toma una clave 'c' del
+		-- diccionario y devuelve una función que, dado un elemento del diccionario y un
+		-- booleano, devuelve la conjunción entre el booleano por un lado y la comparación
+		-- de la clave c con la clave del elemento por el otro.
+comparar :: Eq k => k -> ( (k,v) -> Bool -> Bool)
+comparar = (\c -> \t b -> b || (c == fst t))
+-- /Resolucion
 
 (?) :: Eq k => Dict k v -> k -> Bool
 (?) = undefined
