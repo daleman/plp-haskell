@@ -1,1 +1,6 @@
 *~
+mapReduce.hi
+mapReduce.o
+mapReduceSpec.hi
+mapReduceSpec.o
+testTP1
