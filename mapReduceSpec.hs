@@ -83,6 +83,12 @@ main = hspec $ do
       monumentosTop [ "m1", "m0", "m0", "m0", "m2", "m2", "m3"] 
       `shouldSatisfy` (\res -> res == ["m0", "m2", "m3", "m1"] || res == ["m0", "m2", "m1", "m3"])
 
+  describe "Utilizando mapperProcess" $ do
+    it "puede aplicar la funcion de mapeo a cada elemento" $ do
+      --Ej7
+	mapperProcess mapper1 listaPaises 
+         `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
+
 superpoderes :: Dict String [String]
 superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",[]),("Flash",["Rápido"]),("Batman",[])]
 
@@ -112,3 +118,6 @@ primeros12 = [1,2,3,4,5,6,7,8,9,10,11,12]
 
 balanceo :: [[a]] -> Bool
 balanceo = (\res -> length (maximumBy (comparing length) res) <= 1 + length (minimumBy (comparing length) res))
+
+listaPaises :: [String]
+listaPaises = ["Argentina","Brasil","Alemania","Argentina","Argentina","Brasil","Uruguay","Japon","Australia","Japon","Argentina"]

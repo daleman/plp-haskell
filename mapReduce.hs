@@ -195,7 +195,8 @@ mapReduce m r l = reducerProcess r (combinerProcess (map (mapperProcess m) (dist
 -- Ejercicio 11
 visitasPorMonumento :: [String] -> Dict String Int
 
--- Resolución 11 : Función 'visitasPorMonumento' ...
+-- Resolución 11 : Función 'visitasPorMonumento' ...Aplica la función 'mapper1' que crea
+	--tuplas (monumento, unidad) para que luego sume todas las veces que se visito al monumento(sumando todas las unidades).
 visitasPorMonumento = mapReduce mapper1 reducer1
 
 	-- Función auxiliar 'mapper1' ...
