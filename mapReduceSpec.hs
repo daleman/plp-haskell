@@ -71,30 +71,41 @@ main = hspec $ do
     it "puede distribuírse un conjunto en n subconjuntos balanceados" $ do
       -- Ej6
       length (distributionProcess 5 primeros12)      `shouldBe` 5
+      concat (distributionProcess 5 primeros12)      `shouldMatchList` primeros12
       distributionProcess 5 primeros12               `shouldSatisfy` balanceo
       length (distributionProcess 7 divisores)       `shouldBe` 7
+      concat (distributionProcess 7 divisores)       `shouldMatchList` divisores
       distributionProcess 7 divisores                `shouldSatisfy` balanceo
+
+  describe "Utilizando mapperProcess" $ do
+    it "puede aplicarse la funcion de mapeo a cada elemento" $ do
+      -- Ej7
+      mapperProcess (\x -> [(x,1)]) listaPaises `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
+
+  describe "Utilizando combinerProcess" $ do
+    it "pueden combinarse los resultados y agruparlos por clave" $ do
+      -- Ej8
+      combinerProcess (map (mapperProcess (\x -> [(x,1)])) (distributionProcess 3 listaPaises)) `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Japon",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Australia",[1])]
+      combinerProcess numeros ! 1 `shouldMatchList` numerosCombinados ! 1
+      combinerProcess numeros ! 2 `shouldMatchList` numerosCombinados ! 2
+      combinerProcess numeros ! 3 `shouldMatchList` numerosCombinados ! 3
+      combinerProcess numeros ! 4 `shouldMatchList` numerosCombinados ! 4
+      combinerProcess numeros ! 5 `shouldMatchList` numerosCombinados ! 5
+      combinerProcess numeros ! 6 `shouldMatchList` numerosCombinados ! 6
+
+    it "puede aplicarse la función de reducción a cada elemento" $ do
+      -- Ej9
+      reducerProcess (\x -> [fst x]) numerosCombinados `shouldMatchList` [1,2,3,4,5,6]
 
   describe "Utilizando Map Reduce" $ do
     it "visitas por monumento funciona en algún orden" $ do
+      -- Ej11
       visitasPorMonumento [ "m1" ,"m2" ,"m3" ,"m2","m1", "m3", "m3"] `shouldMatchList` [("m3",3), ("m1",2), ("m2",2)] 
 
     it "monumentosTop devuelve los más visitados en algún orden" $ do 
+      -- Ej12
       monumentosTop [ "m1", "m0", "m0", "m0", "m2", "m2", "m3"] 
       `shouldSatisfy` (\res -> res == ["m0", "m2", "m3", "m1"] || res == ["m0", "m2", "m1", "m3"])
-
-  describe "Utilizando mapperProcess" $ do
-    it "puede aplicar la funcion de mapeo a cada elemento" $ do
-      --Ej7
-	mapperProcess mapper1 listaPaises 
-         `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
-
-  describe "Utilizando combinerProcess" $ do
-    it "puede combinar los resultados y agruparlos por clave" $ do
-      --Ej8
-	combinerProcess (map (mapperProcess mapper1) (distributionProcess 3 listaPaises))
-         `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Japon",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Australia",[1])]
-
 
 superpoderes :: Dict String [String]
 superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",[]),("Flash",["Rápido"]),("Batman",[])]
@@ -128,3 +139,9 @@ balanceo = (\res -> length (maximumBy (comparing length) res) <= 1 + length (min
 
 listaPaises :: [String]
 listaPaises = ["Argentina","Brasil","Alemania","Argentina","Argentina","Brasil","Uruguay","Japon","Australia","Japon","Argentina"]
+
+numeros :: [Dict Int [String]]
+numeros = [[(1,["Uno","uno"]),(2,["Dos","dos"]),(5,["Cinco","cinco"])],[(1,["One","one"]),(2,["Two","two"]),(4,["Four","four"]),(6,["Six","six"])],[(2,["II"]),(3,["III"]),(4,["IV"]),(5,["V"]),(6,["VI"])],[(1,["1"]),(3,["3"]),(6,["6"])]]
+
+numerosCombinados :: Dict Int [String]
+numerosCombinados = [(1,["Uno","uno","One","one","1"]),(2,["Dos","dos","Two","two","II"]),(3,["III","3"]),(4,["Four","four","IV"]),(5,["Cinco","cinco","V"]),(6,["Six","six","VI","6"])]
