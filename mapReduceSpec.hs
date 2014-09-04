@@ -89,6 +89,13 @@ main = hspec $ do
 	mapperProcess mapper1 listaPaises 
          `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
 
+  describe "Utilizando combinerProcess" $ do
+    it "puede combinar los resultados y agruparlos por clave" $ do
+      --Ej8
+	combinerProcess (map (mapperProcess mapper1) (distributionProcess 3 listaPaises))
+         `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Japon",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Australia",[1])]
+
+
 superpoderes :: Dict String [String]
 superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",[]),("Flash",["Rápido"]),("Batman",[])]
 
