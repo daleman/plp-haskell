@@ -29,9 +29,6 @@ comparar = (\c -> \t b -> b || (c == fst t))
 (?) = flip belongs
 -- /Resolución 1b
 
---Main> [("calle",[3]),("city",[2,1])] ? "city" 
---True
-
 -- Ejercicio 2
 get :: Eq k => k -> Dict k v -> v
 
@@ -57,9 +54,6 @@ obtener = (\c -> \t1 t2 -> if c == fst t1 then t1 else t2)
 (!) = flip get
 -- /Resolución 2b
 
---Main> [("calle",[3]),("city",[2,1])] ! "city" 
---[2,1]
-
 -- Ejercicio 3
 insertWith :: Eq k => (v -> v -> v) -> k -> v -> Dict k v -> Dict k v
 
@@ -79,9 +73,6 @@ insertWith f c d l | l ? c = map (aplicar f c d) l
 aplicar :: Eq k => (v -> v -> v) -> k -> v -> ( (k,v) -> (k,v) )
 aplicar f c d = (\t -> if c == fst t then ( c, f (snd t) d ) else t)
 -- /Resolución 3
-
---Main> insertWith (++) 2 ['p'] (insertWith (++) 1 ['a','b'] (insertWith (++) 1 ['l'] []))
---[(1,"lab"),(2,"p")]
 
 -- Ejercicio 4
 groupByKey :: Eq k => [(k,v)] -> Dict k [v]
@@ -115,10 +106,6 @@ unir :: Eq k => (v -> v -> v) -> ((k,v) -> Dict k v -> Dict k v)
 unir f = (\t -> insertWith f (fst t) (snd t))
 -- /Resolución 5
 
---Main> unionWith (++) [("calle",[3]),("city",[2,1])] [("calle", [4]), ("altura", [1,3,2])]
---[("calle",[3,4]),("city",[2,1]),("altura",[1,3,2])]
-
-
 -- ------------------------------Sección 2--------------MapReduce---------------------------
 
 type Mapper a k v = a -> [(k,v)]
@@ -149,7 +136,7 @@ mapperProcess :: Eq k => Mapper a k v -> [a] -> [(k,[v])]
 	-- función 'concat' para reorganizar la lista de listas de tuplas en una lista de
 	-- tuplas ( [[(k,v)]] -> [(k,v)] ). Finalmente, agrupa esta lista por claves, es decir,
 	-- genera un diccionario (una lista de tuplas sin claves repetidas) mediante la función
-	-- 'groupByKey' ( [(k,v)] -> Dict k [v] ). NO TESTEADA!
+	-- 'groupByKey' ( [(k,v)] -> Dict k [v] ).
 mapperProcess m l = groupByKey (concat (map m l))
 -- /Resolución 7
 
@@ -171,16 +158,12 @@ ordenK a b | (fst a) < (fst b) = LT
            | otherwise = GT
 -- /Resolución 8
 
---Main> combinerProcess [[(1,["Uno","uno"]),(2,["Dos","dos"]),(5,["Cinco","cinco"])],[(1,["One","one"]),(2,["Two","two"]),(4,["Four","four"]),(6,["Six","six"])],[(2,["II"]),(3,["III"]),(4,["IV"]),(5,["V"]),(6,["VI"])],[(1,["1"]),(3,["3"]),(6,["6"])]]
---[(1,["Uno","uno","One","one","1"]),(2,["Dos","dos","Two","two","II"]),(3,["III","3"]),(4,["Four","four","IV"]),(5,["Cinco","cinco","V"]),(6,["Six","six","VI","6"])]
-
 -- Ejercicio 9
 reducerProcess :: Reducer k v b -> [(k, [v])] -> [b]
 
 -- Resolución 9 : Función 'reducerProcess'. Primero utiliza la función 'map' para aplicar
 	-- la función de reducción a la lista de elementos ( [(k,[v])] -> [[b]] ). Luego utiliza
-	-- la función 'concat' para aplanar la lista de listas en una lista ( [[b]] -> [b] ). NO
-	-- TESTEADA!
+	-- la función 'concat' para aplanar la lista de listas en una lista ( [[b]] -> [b] ).
 reducerProcess r d = concat (map r d)
 -- /Resolución 9
 
@@ -195,64 +178,46 @@ mapReduce m r l = reducerProcess r (combinerProcess (map (mapperProcess m) (dist
 -- Ejercicio 11
 visitasPorMonumento :: [String] -> Dict String Int
 
--- Resolución 11 : Función 'visitasPorMonumento' ...Aplica la función 'mapper1' que crea
-	--tuplas (monumento, unidad) para que luego sume todas las veces que se visito al monumento(sumando todas las unidades).
-visitasPorMonumento = mapReduce mapper1 reducer1
-
-	-- Función auxiliar 'mapper1' ...
-mapper1 :: Mapper String String Int
-mapper1 = (\x -> (x,1):[])
-
-	-- Función auxiliar 'reducer1' ...
-reducer1 :: Reducer String Int (String,Int)
-reducer1 = (\x -> (fst x, foldr1 (+) (snd x)):[])
+-- Resolución 11 : Función 'visitasPorMonumento' implementada con mapReduce. La función de
+  -- mapeo crea una tupla con el nombre del monumento como clave. La función de reducción
+  -- devuelve una tupla con el nombre del monumento y la cantidad de visitas.
+visitasPorMonumento = mapReduce (\x -> [(x,1)]) (\x -> [(fst x, foldr1 (+) (snd x))])
 -- /Resolución 11
 
 -- Ejercicio 12
 monumentosTop :: [String] -> [String]
 
--- Resolución 12 : Función 'monumentosTop' ...
+-- Resolución 12 : Función 'monumentosTop' implementada con mapReduce. Aplica dos
+  -- itreraciones de mapReduce (firstIt y secondIt).
 monumentosTop l = secondIt (firstIt l)
 
-	-- Función auxiliar firstIt ...
+	-- Función auxiliar firstIt. Toma una lista de monumentos y devuelve un diccionario
+      -- cuyas claves son la cantidad de visitas multiplicadas por menos 1 y las
+      -- definiciones son los monumentos correspondientes. De esta forma, los monumentos
+      -- quedan ordenados de más visitados a menos visitados.
 firstIt :: [String] -> Dict Int String
-firstIt = mapReduce mapper2first reducer2first
+firstIt = mapReduce (\x -> [(x,-1)]) (\x -> [(foldr1 (+) (snd x), fst x)])
 
-	-- Función auxiliar secondIt ...
+	-- Función auxiliar secondIt. Toma el diccionario resultante de aplicar 'firstIt' y
+    -- construye una lista a partir de las definiciones (los monumentos) en el mismo orden.
 secondIt :: Dict Int String -> [String]
-secondIt = mapReduce mapper2second reducer2second
-
-	-- Función auxiliar 'mapper2first' ...
-mapper2first :: Mapper String String Int
-mapper2first = (\x -> (x,-1):[])
-
-	-- Función auxiliar 'reducer2first' ...
-reducer2first :: Reducer String Int (Int, String)
-reducer2first = (\x -> (foldr1 (+) (snd x), fst x):[])
-
-	-- Función auxiliar 'mapper2second' ...
-mapper2second :: Mapper (Int,String) Int String
-mapper2second = (\x -> x:[])
-
-	-- Función auxiliar 'reducer2second' ...
-reducer2second :: Reducer Int String String
-reducer2second = (\x -> (snd x))
+secondIt = mapReduce (\x -> [x]) (\x -> (snd x))
 -- /Resolución 12
 
 -- Ejercicio 13 
 monumentosPorPais :: [(Structure, Dict String String)] -> [(String, Int)]
 
--- Resolución 13 : Función 'monumentosPorPais' ...
-monumentosPorPais = mapReduce mapper3 reducer3
+-- Resolución 13 : Función 'monumentosPorPais' implementada con mapReduce. Utiliza la
+  -- función auxiliar 'auxMapper' como función de mapeo, con la que genera un diccionario
+  -- con todos los países. La función de reducción devuelve un diccionario cuyas definiciones
+  -- son la cantidad de monumentos de cada país.
+monumentosPorPais = mapReduce auxMapper (\x -> [(fst x, foldr1 (+) (snd x))])
 
-	-- Función auxiliar 'mapper3' ...
-mapper3 :: Mapper (Structure, Dict String String) String Int
-mapper3 (Monument, x) = ((x ! "country"), 1):[]
-mapper3 _ = []
-
-	-- Función auxiliar 'reducer3' ...
-reducer3 :: Reducer String Int (String,Int)
-reducer3 = (\x -> (fst x, foldr1 (+) (snd x)):[])
+	-- Función auxiliar 'auxMapper'. Agrega una tupla con el atributo 'country' si y solo si
+      -- el elemento es de tipo 'Monument'
+auxMapper :: Mapper (Structure, Dict String String) String Int
+auxMapper (Monument, x) = [((x ! "country"), 1)]
+auxMapper _ = []
 -- /Resolución 13
 
 -- ------------------------ Ejemplo de datos del ejercicio 13 ----------------------
