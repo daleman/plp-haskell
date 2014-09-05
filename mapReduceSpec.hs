@@ -77,15 +77,14 @@ main = hspec $ do
       concat (distributionProcess 7 divisores)       `shouldMatchList` divisores
       distributionProcess 7 divisores                `shouldSatisfy` balanceo
 
-  describe "Utilizando mapperProcess" $ do
     it "puede aplicarse la funcion de mapeo a cada elemento" $ do
       -- Ej7
-      mapperProcess (\x -> [(x,1)]) listaPaises `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
+      mapperProcess (\x -> [(x,1)]) paises `shouldMatchList` paisesCombinados
 
-  describe "Utilizando combinerProcess" $ do
-    it "pueden combinarse los resultados y agruparlos por clave" $ do
+    it "pueden combinarse los resultados de distintos procesos" $ do
       -- Ej8
-      combinerProcess (map (mapperProcess (\x -> [(x,1)])) (distributionProcess 3 listaPaises)) `shouldMatchList` [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Japon",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Australia",[1])]
+      combinerProcess (distributionProcess 3 superpoderes) `shouldMatchList` superpoderes
+      combinerProcess (distributionProcess 4 paisesCombinados) `shouldMatchList` paisesCombinados
       combinerProcess numeros ! 1 `shouldMatchList` numerosCombinados ! 1
       combinerProcess numeros ! 2 `shouldMatchList` numerosCombinados ! 2
       combinerProcess numeros ! 3 `shouldMatchList` numerosCombinados ! 3
@@ -137,8 +136,11 @@ primeros12 = [1,2,3,4,5,6,7,8,9,10,11,12]
 balanceo :: [[a]] -> Bool
 balanceo = (\res -> length (maximumBy (comparing length) res) <= 1 + length (minimumBy (comparing length) res))
 
-listaPaises :: [String]
-listaPaises = ["Argentina","Brasil","Alemania","Argentina","Argentina","Brasil","Uruguay","Japon","Australia","Japon","Argentina"]
+paises :: [String]
+paises = ["Argentina","Brasil","Alemania","Argentina","Argentina","Brasil","Uruguay","Japon","Australia","Japon","Argentina"]
+
+paisesCombinados :: Dict String [Int]
+paisesCombinados = [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
 
 numeros :: [Dict Int [String]]
 numeros = [[(1,["Uno","uno"]),(2,["Dos","dos"]),(5,["Cinco","cinco"])],[(1,["One","one"]),(2,["Two","two"]),(4,["Four","four"]),(6,["Six","six"])],[(2,["II"]),(3,["III"]),(4,["IV"]),(5,["V"]),(6,["VI"])],[(1,["1"]),(3,["3"]),(6,["6"])]]
