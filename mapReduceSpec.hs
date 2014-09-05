@@ -32,40 +32,40 @@ main = hspec $ do
       [("calle",[3]),("city",[2,1])] ! "city"                                   `shouldBe` [2,1]
       [("calle","San Blas"),("city","Hurlingham")] ! "city"                     `shouldBe` "Hurlingham"
       superpoderes ! "Aquaman"                                                  `shouldBe` ["Nada"]
-      finales ! "Análisis"  `shouldBe` False
+      finales ! "Análisis"                                                      `shouldBe` False
 
     it "pueden agregarse definiciones sin repetir claves" $ do
       -- Ej3
-      insertWith (++) 2 ['p'] (insertWith (++) 1 ['a','b'] (insertWith (++) 1 ['l'] []))      `shouldMatchList` [(1,"lab"),(2,"p")]
-      insertWith (++) 1 [99] [(1 , [1]) , (2 , [2])] ! 1                                      `shouldMatchList` [1,99]
-      insertWith (++) 3 [99] [(1 , [1]) , (2 , [2])]                                          `shouldMatchList` [(1 ,[1]) ,(2 ,[2]) ,(3 ,[99])]
-      insertWith (+) "Alemania" 4 (insertWith (-) "Brasil" 3 [("Alemania",3),("Brasil",4)])   `shouldMatchList` [("Alemania",7),("Brasil",1)]
-      insertWith (+) "Argentina" 0 [("Alemania",1)]                                           `shouldMatchList` [("Argentina",0),("Alemania",1)]
-      insertWith (&&) ["AR$","U$S"] False cambio ! ["AR$","U$S"]                              `shouldBe` False
-      insertWith (&&) ["U$S","AR$"] True cambio ! ["U$S","AR$"]                               `shouldBe` False
+      insertWith (++) 2 ['p'] (insertWith (++) 1 ['a','b'] (insertWith (++) 1 ['l'] []))     `shouldMatchList` [(1,"lab"),(2,"p")]
+      insertWith (++) 1 [99] [(1 , [1]) , (2 , [2])] ! 1                                     `shouldMatchList` [1,99]
+      insertWith (++) 3 [99] [(1 , [1]) , (2 , [2])]                                         `shouldMatchList` [(1 ,[1]) ,(2 ,[2]) ,(3 ,[99])]
+      insertWith (+) "Alemania" 4 (insertWith (-) "Brasil" 3 [("Alemania",3),("Brasil",4)])  `shouldMatchList` [("Alemania",7),("Brasil",1)]
+      insertWith (+) "Argentina" 0 [("Alemania",1)]                                          `shouldMatchList` [("Argentina",0),("Alemania",1)]
+      insertWith (&&) ["AR$","U$S"] False cambio ! ["AR$","U$S"]                             `shouldBe` False
+      insertWith (&&) ["U$S","AR$"] True cambio ! ["U$S","AR$"]                              `shouldBe` False
 
     it "puede generarse un diccionario a partir de una lista de tuplas" $ do
       -- Ej4
-      calles1 ! "calle"            `shouldMatchList` ["Jean Jaures","7"]
-      calles1 ! "ciudad"           `shouldMatchList` ["Brujas","Kyoto"]
-      groupByKey divisores ! 4     `shouldMatchList` [2]
-      groupByKey divisores ! 6     `shouldMatchList` [2,3]
-      groupByKey divisores ! 8     `shouldMatchList` [2,4]
-      groupByKey divisores ! 9     `shouldMatchList` [3]
-      groupByKey divisores ! 10    `shouldMatchList` [2,5]
-      groupByKey divisores ! 12    `shouldMatchList` [2,3,4,6]
-      groupByKey [(0,1),(1,0)]     `shouldMatchList` [(0,[1]),(1,[0])]
+      groupByKey calles ! "calle"              `shouldMatchList` ["Jean Jaures","7"]
+      groupByKey calles ! "ciudad"             `shouldMatchList` ["Brujas","Kyoto"]
+      groupByKey divisores ! 4                 `shouldMatchList` [2]
+      groupByKey divisores ! 6                 `shouldMatchList` [2,3]
+      groupByKey divisores ! 8                 `shouldMatchList` [2,4]
+      groupByKey divisores ! 9                 `shouldMatchList` [3]
+      groupByKey divisores ! 10                `shouldMatchList` [2,5]
+      groupByKey divisores ! 12                `shouldMatchList` [2,3,4,6]
+      groupByKey [(0,1),(1,0)]                 `shouldMatchList` [(0,[1]),(1,[0])]
 
     it "pueden combinarse dos diccionarios en uno" $ do
       -- Ej5
-      calles2 ! "calle"            `shouldMatchList` ["3","4"]
-      calles2 ! "ciudad"           `shouldMatchList` ["1","2"]
-      calles2 ! "altura"           `shouldMatchList` ["1","2","3"]
-      rutas ! "rutas"              `shouldBe` 7
-      rutas ! "ciclos"             `shouldBe` 1
-      calles12 ! "calle"           `shouldMatchList` ["3","4","Jean Jaures","7"]
-      calles12 ! "ciudad"          `shouldMatchList` ["1","2","Brujas","Kyoto"]
-      calles12 ! "altura"          `shouldMatchList` ["1","2","3"]
+      unionWith (++) callesA callesB ! "calle"                                            `shouldMatchList` ["3","4"]
+      unionWith (++) callesA callesB ! "ciudad"                                           `shouldMatchList` ["1","2"]
+      unionWith (++) callesA callesB ! "altura"                                           `shouldMatchList` ["1","2","3"]
+      unionWith (+) rutasA rutasB ! "rutas"                                               `shouldBe` 7
+      unionWith (+) rutasA rutasB ! "ciclos"                                              `shouldBe` 1
+      unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "calle"       `shouldMatchList` ["3","4","Jean Jaures","7"]
+      unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "ciudad"      `shouldMatchList` ["1","2","Brujas","Kyoto"]
+      unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "altura"      `shouldMatchList` ["1","2","3"]
 
   describe "Utilizando funciones de distribución y combinación" $ do
     it "puede distribuírse un conjunto en n subconjuntos balanceados" $ do
@@ -79,22 +79,43 @@ main = hspec $ do
 
     it "puede aplicarse la funcion de mapeo a cada elemento" $ do
       -- Ej7
-      mapperProcess (\x -> [(x,1)]) paises `shouldMatchList` paisesCombinados
+      mapperProcess (\x -> [(x,1)]) paises                                                `shouldMatchList` dictPaises
+      mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Fuerte"             `shouldMatchList` ["Superman"]
+      mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Rápido"             `shouldMatchList` ["Superman","Flash"]
+      mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Visión Láser"       `shouldMatchList` ["Superman"]
+      mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Vuela"              `shouldMatchList` ["Superman"]
+      mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Nada"               `shouldMatchList` ["Aquaman"]
 
     it "pueden combinarse los resultados de distintos procesos" $ do
       -- Ej8
-      combinerProcess (distributionProcess 3 superpoderes) `shouldMatchList` superpoderes
-      combinerProcess (distributionProcess 4 paisesCombinados) `shouldMatchList` paisesCombinados
-      combinerProcess numeros ! 1 `shouldMatchList` numerosCombinados ! 1
-      combinerProcess numeros ! 2 `shouldMatchList` numerosCombinados ! 2
-      combinerProcess numeros ! 3 `shouldMatchList` numerosCombinados ! 3
-      combinerProcess numeros ! 4 `shouldMatchList` numerosCombinados ! 4
-      combinerProcess numeros ! 5 `shouldMatchList` numerosCombinados ! 5
-      combinerProcess numeros ! 6 `shouldMatchList` numerosCombinados ! 6
+      combinerProcess (distributionProcess 3 superpoderes)       `shouldMatchList` superpoderes
+      combinerProcess (distributionProcess 4 dictPaises)         `shouldMatchList` dictPaises
+      combinerProcess numeros ! 1                                `shouldMatchList` numerosCombinados ! 1
+      combinerProcess numeros ! 2                                `shouldMatchList` numerosCombinados ! 2
+      combinerProcess numeros ! 3                                `shouldMatchList` numerosCombinados ! 3
+      combinerProcess numeros ! 4                                `shouldMatchList` numerosCombinados ! 4
+      combinerProcess numeros ! 5                                `shouldMatchList` numerosCombinados ! 5
+      combinerProcess numeros ! 6                                `shouldMatchList` numerosCombinados ! 6
 
     it "puede aplicarse la función de reducción a cada elemento" $ do
       -- Ej9
-      reducerProcess (\x -> [fst x]) numerosCombinados `shouldMatchList` [1,2,3,4,5,6]
+      reducerProcess (\x -> [fst x]) numerosCombinados                                    `shouldMatchList` [1,2,3,4,5,6]
+
+    it "puede aplicarse el método 'mapReduce' completo" $ do
+      -- Ej10
+      mapReduce (\x -> [(snd x, fst x)]) (\x -> [(a, (fst x)) | a <- (snd x)]) finales    `shouldMatchList` finales
+      mapReduce mapDivisores reduceDivisores primeros12 ! 1                               `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 2                               `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 3                               `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 4                               `shouldMatchList` [2]
+      mapReduce mapDivisores reduceDivisores primeros12 ! 5                               `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 6                               `shouldMatchList` [2,3]
+      mapReduce mapDivisores reduceDivisores primeros12 ! 7                               `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 8                               `shouldMatchList` [2,4]
+      mapReduce mapDivisores reduceDivisores primeros12 ! 9                               `shouldMatchList` [3]
+      mapReduce mapDivisores reduceDivisores primeros12 ! 10                              `shouldMatchList` [2,5]
+      mapReduce mapDivisores reduceDivisores primeros12 ! 11                              `shouldMatchList` []
+      mapReduce mapDivisores reduceDivisores primeros12 ! 12                              `shouldMatchList` [2,3,4,6]
 
   describe "Utilizando Map Reduce" $ do
     it "visitas por monumento funciona en algún orden" $ do
@@ -115,20 +136,23 @@ finales = [("Análisis",False),("Algebra",True),("AlgoI",True),("OrgaI",True),("
 cambio :: Dict [String] Bool
 cambio = [(["EUR","U$S"],True),(["AR$","EUR"],True),(["U$S","AR$"],False),(["AR$","U$S"],True),(["EUR","AR$","U$S"],True),(["AR$","EUR","AR$"],False)]
 
-calles1 :: [(String,[String])]
-calles1 = groupByKey [("calle","Jean Jaures"),("ciudad","Brujas"),("ciudad","Kyoto"),("calle","7")]
+calles :: [(String,String)]
+calles = [("calle","Jean Jaures"),("ciudad","Brujas"),("ciudad","Kyoto"),("calle","7")]
 
 divisores :: [(Int,Int)]
 divisores = [(6,3),(12,4),(8,2),(10,5),(12,6),(8,4),(9,3),(4,2),(12,3),(6,2),(10,2),(12,2)]
 
-calles2 :: Dict String [String]
-calles2 = unionWith (++) [("calle",["3"]),("ciudad",["2","1"])] [("calle", ["4"]), ("altura", ["1","3","2"])]
+callesA :: Dict String [String]
+callesA = [("calle",["3"]),("ciudad",["2","1"])]
 
-rutas :: Dict String Int
-rutas = unionWith (+) [("rutas",3)] [("rutas",4),("ciclos",1)]
+callesB :: Dict String [String]
+callesB = [("calle", ["4"]), ("altura", ["1","3","2"])]
 
-calles12 :: Dict String [String]
-calles12 = unionWith (++) calles1 calles2
+rutasA :: Dict String Int
+rutasA = [("rutas",3)]
+
+rutasB :: Dict String Int
+rutasB = [("rutas",4),("ciclos",1)]
 
 primeros12 :: [Int]
 primeros12 = [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -139,11 +163,17 @@ balanceo = (\res -> length (maximumBy (comparing length) res) <= 1 + length (min
 paises :: [String]
 paises = ["Argentina","Brasil","Alemania","Argentina","Argentina","Brasil","Uruguay","Japon","Australia","Japon","Argentina"]
 
-paisesCombinados :: Dict String [Int]
-paisesCombinados = [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
+dictPaises :: Dict String [Int]
+dictPaises = [("Argentina",[1,1,1,1]),("Brasil",[1,1]),("Alemania",[1]),("Uruguay",[1]),("Japon",[1,1]),("Australia",[1])]
 
 numeros :: [Dict Int [String]]
 numeros = [[(1,["Uno","uno"]),(2,["Dos","dos"]),(5,["Cinco","cinco"])],[(1,["One","one"]),(2,["Two","two"]),(4,["Four","four"]),(6,["Six","six"])],[(2,["II"]),(3,["III"]),(4,["IV"]),(5,["V"]),(6,["VI"])],[(1,["1"]),(3,["3"]),(6,["6"])]]
 
 numerosCombinados :: Dict Int [String]
 numerosCombinados = [(1,["Uno","uno","One","one","1"]),(2,["Dos","dos","Two","two","II"]),(3,["III","3"]),(4,["Four","four","IV"]),(5,["Cinco","cinco","V"]),(6,["Six","six","VI","6"])]
+
+mapDivisores :: Mapper Int Int [Int]
+mapDivisores = (\x -> [(x, [(snd d) | d <- divisores, fst d == x])])
+
+reduceDivisores :: Reducer Int [Int] (Int, [Int])
+reduceDivisores = (\x -> [(fst x, (concat (snd x)))])
