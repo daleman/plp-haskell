@@ -128,12 +128,19 @@ main = hspec $ do
   describe "Utilizando Map Reduce" $ do
     it "visitas por monumento funciona en algún orden" $ do
       -- Ej11
-      visitasPorMonumento [ "m1" ,"m2" ,"m3" ,"m2","m1", "m3", "m3"] `shouldMatchList` [("m3",3), ("m1",2), ("m2",2)] 
+      visitasPorMonumento ["m1", "m2", "m3", "m2", "m1", "m3", "m3"]  `shouldMatchList` [("m3",3), ("m1",2), ("m2",2)]
+      visitasPorMonumento paises                                      `shouldMatchList` map (\x -> (fst x, foldr1 (+) (snd x))) dictPaises
 
     it "monumentosTop devuelve los más visitados en algún orden" $ do 
       -- Ej12
-      monumentosTop [ "m1", "m0", "m0", "m0", "m2", "m2", "m3"] 
-      `shouldSatisfy` (\res -> res == ["m0", "m2", "m3", "m1"] || res == ["m0", "m2", "m1", "m3"])
+      monumentosTop ["m1", "m0", "m0", "m0", "m2", "m2", "m3"]        `shouldSatisfy` (\res -> res == ["m0", "m2", "m3", "m1"] || res == ["m0", "m2", "m1", "m3"])
+      monumentosTop paises !! 0                                       `shouldBe` "Argentina"
+      monumentosTop paises                                            `shouldSatisfy` (\r -> (r !! 1 == "Brasil" && r !! 2 == "Japon") || (r !! 1 == "Japon" && r !! 2 == "Brasil"))
+      drop 3 (monumentosTop paises)                                   `shouldMatchList` ["Uruguay","Alemania","Australia"]
+
+    it "monumentosPorPais" $ do
+      -- Ej13
+      monumentosPorPais items                                         `shouldMatchList` [("Argentina",2),("Irak",1)]
 
 superpoderes :: Dict String [String]
 superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",["-"]),("Flash",["Rápido"]),("Batman",["-"])]
@@ -190,7 +197,7 @@ reducerHeroes :: Reducer String String String
 reducerHeroes = (\x -> [fst x ++ ": " ++ (foldr1 (\x y -> x ++ ", " ++ y) (snd x))])
 
 heroes :: [String]
-heores = [("Batman: -"),("Green Arrow: -"),("Aquaman: Nada"),("Superman: Fuerte, Rápido, Vuela, Visión Láser"),("Flash: Rápido")]
+heroes = [("Batman: -"),("Green Arrow: -"),("Aquaman: Nada"),("Superman: Fuerte, Rápido, Vuela, Visión Láser"),("Flash: Rápido")]
 
 mapDivisores :: Mapper Int Int [Int]
 mapDivisores = (\x -> [(x, [(snd d) | d <- divisores, fst d == x])])
