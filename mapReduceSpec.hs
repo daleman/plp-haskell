@@ -55,6 +55,7 @@ main = hspec $ do
       groupByKey divisores ! 10                `shouldMatchList` [2,5]
       groupByKey divisores ! 12                `shouldMatchList` [2,3,4,6]
       groupByKey [(0,1),(1,0)]                 `shouldMatchList` [(0,[1]),(1,[0])]
+      groupByKey listaVacia                    `shouldBe` dictVacio
 
     it "pueden combinarse dos diccionarios en uno" $ do
       -- Ej5
@@ -66,10 +67,14 @@ main = hspec $ do
       unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "calle"       `shouldMatchList` ["3","4","Jean Jaures","7"]
       unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "ciudad"      `shouldMatchList` ["1","2","Brujas","Kyoto"]
       unionWith (++) (groupByKey calles) (unionWith (++) callesA callesB) ! "altura"      `shouldMatchList` ["1","2","3"]
+      unionWith (++) dictVacio callesA                                                    `shouldMatchList` callesA
+      unionWith (++) callesB dictVacio                                                    `shouldMatchList` callesB
 
   describe "Utilizando funciones de distribución y combinación" $ do
     it "puede distribuírse un conjunto en n subconjuntos balanceados" $ do
       -- Ej6
+      distributionProcess 1 divisores                `shouldMatchList` [divisores]
+      distributionProcess 1 primeros12               `shouldMatchList` [primeros12]
       length (distributionProcess 5 primeros12)      `shouldBe` 5
       concat (distributionProcess 5 primeros12)      `shouldMatchList` primeros12
       distributionProcess 5 primeros12               `shouldSatisfy` balanceo
@@ -85,6 +90,7 @@ main = hspec $ do
       mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Visión Láser"       `shouldMatchList` ["Superman"]
       mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Vuela"              `shouldMatchList` ["Superman"]
       mapperProcess (\x -> [(p, fst x) | p <- snd x]) superpoderes ! "Nada"               `shouldMatchList` ["Aquaman"]
+      mapperProcess (\x -> [("1","1")]) listaVacia                                        `shouldBe` dictVacio
 
     it "pueden combinarse los resultados de distintos procesos" $ do
       -- Ej8
@@ -96,10 +102,12 @@ main = hspec $ do
       combinerProcess numeros ! 4                                `shouldMatchList` numerosCombinados ! 4
       combinerProcess numeros ! 5                                `shouldMatchList` numerosCombinados ! 5
       combinerProcess numeros ! 6                                `shouldMatchList` numerosCombinados ! 6
+      combinerProcess [dictVacio]                                `shouldBe` dictVacio
 
     it "puede aplicarse la función de reducción a cada elemento" $ do
       -- Ej9
-      reducerProcess (\x -> [fst x]) numerosCombinados                                    `shouldMatchList` [1,2,3,4,5,6]
+      reducerProcess (\x -> [fst x]) numerosCombinados           `shouldMatchList` [1,2,3,4,5,6]
+      reducerProcess reducerHeroes superpoderes                  `shouldMatchList` heroes
 
     it "puede aplicarse el método 'mapReduce' completo" $ do
       -- Ej10
@@ -128,7 +136,7 @@ main = hspec $ do
       `shouldSatisfy` (\res -> res == ["m0", "m2", "m3", "m1"] || res == ["m0", "m2", "m1", "m3"])
 
 superpoderes :: Dict String [String]
-superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",[]),("Flash",["Rápido"]),("Batman",[])]
+superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",["-"]),("Flash",["Rápido"]),("Batman",["-"])]
 
 finales :: Dict String Bool
 finales = [("Análisis",False),("Algebra",True),("AlgoI",True),("OrgaI",True),("AlgoII",True),("AlgoIII",True),("OrgaII",True),("SO",True),("IS1",True)]
@@ -139,8 +147,11 @@ cambio = [(["EUR","U$S"],True),(["AR$","EUR"],True),(["U$S","AR$"],False),(["AR$
 calles :: [(String,String)]
 calles = [("calle","Jean Jaures"),("ciudad","Brujas"),("ciudad","Kyoto"),("calle","7")]
 
-divisores :: [(Int,Int)]
-divisores = [(6,3),(12,4),(8,2),(10,5),(12,6),(8,4),(9,3),(4,2),(12,3),(6,2),(10,2),(12,2)]
+listaVacia :: [(String, String)]
+listaVacia = []
+
+dictVacio :: Dict String [String]
+dictVacio = []
 
 callesA :: Dict String [String]
 callesA = [("calle",["3"]),("ciudad",["2","1"])]
@@ -153,6 +164,9 @@ rutasA = [("rutas",3)]
 
 rutasB :: Dict String Int
 rutasB = [("rutas",4),("ciclos",1)]
+
+divisores :: [(Int,Int)]
+divisores = [(6,3),(12,4),(8,2),(10,5),(12,6),(8,4),(9,3),(4,2),(12,3),(6,2),(10,2),(12,2)]
 
 primeros12 :: [Int]
 primeros12 = [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -171,6 +185,12 @@ numeros = [[(1,["Uno","uno"]),(2,["Dos","dos"]),(5,["Cinco","cinco"])],[(1,["One
 
 numerosCombinados :: Dict Int [String]
 numerosCombinados = [(1,["Uno","uno","One","one","1"]),(2,["Dos","dos","Two","two","II"]),(3,["III","3"]),(4,["Four","four","IV"]),(5,["Cinco","cinco","V"]),(6,["Six","six","VI","6"])]
+
+reducerHeroes :: Reducer String String String
+reducerHeroes = (\x -> [fst x ++ ": " ++ (foldr1 (\x y -> x ++ ", " ++ y) (snd x))])
+
+heroes :: [String]
+heores = [("Batman: -"),("Green Arrow: -"),("Aquaman: Nada"),("Superman: Fuerte, Rápido, Vuela, Visión Láser"),("Flash: Rápido")]
 
 mapDivisores :: Mapper Int Int [Int]
 mapDivisores = (\x -> [(x, [(snd d) | d <- divisores, fst d == x])])
