@@ -124,12 +124,14 @@ main = hspec $ do
       mapReduce mapDivisores reduceDivisores primeros12 ! 10                              `shouldMatchList` [2,5]
       mapReduce mapDivisores reduceDivisores primeros12 ! 11                              `shouldMatchList` []
       mapReduce mapDivisores reduceDivisores primeros12 ! 12                              `shouldMatchList` [2,3,4,6]
+      mapReduce map5000 reduce5000 cincomilNumeros                                        `shouldSatisfy` (\r -> (dobleInclusion cincomilNumeros r) && (enOrden r))
 
   describe "Utilizando Map Reduce" $ do
     it "visitas por monumento funciona en algún orden" $ do
       -- Ej11
       visitasPorMonumento ["m1", "m2", "m3", "m2", "m1", "m3", "m3"]  `shouldMatchList` [("m3",3), ("m1",2), ("m2",2)]
       visitasPorMonumento paises                                      `shouldMatchList` map (\x -> (fst x, foldr1 (+) (snd x))) dictPaises
+      visitasPorMonumento cincomilPalabras                            `shouldSatisfy` (\r -> (cantidadesCorrectas cincomilPalabras r) && (dobleInclusionPares cincomilPalabras r))
 
     it "monumentosTop devuelve los más visitados en algún orden" $ do 
       -- Ej12
@@ -137,10 +139,12 @@ main = hspec $ do
       monumentosTop paises !! 0                                       `shouldBe` "Argentina"
       monumentosTop paises                                            `shouldSatisfy` (\r -> (r !! 1 == "Brasil" && r !! 2 == "Japon") || (r !! 1 == "Japon" && r !! 2 == "Brasil"))
       drop 3 (monumentosTop paises)                                   `shouldMatchList` ["Uruguay","Alemania","Australia"]
+      -monumentosTop cincomilPalabras                                  `shouldSatisfy` (\r -> (\l -> snd (foldr (\x y -> tuplaTop (cantOcur x l) y) (0,True) r)) cincomilPalabras)
 
     it "monumentosPorPais" $ do
       -- Ej13
       monumentosPorPais items                                         `shouldMatchList` [("Argentina",2),("Irak",1)]
+      monumentosPorPais cincomilMonumentos                            `shouldSatisfy` (\r -> (\l -> foldr (\x y -> y && (cantOcurCountry (fst x) l) == snd x) True r) filtrarMonumentos)
 
 superpoderes :: Dict String [String]
 superpoderes =  [("Superman",["Fuerte","Rápido","Vuela","Visión Láser"]),("Aquaman",["Nada"]),("Green Arrow",["-"]),("Flash",["Rápido"]),("Batman",["-"])]
@@ -204,3 +208,76 @@ mapDivisores = (\x -> [(x, [(snd d) | d <- divisores, fst d == x])])
 
 reduceDivisores :: Reducer Int [Int] (Int, [Int])
 reduceDivisores = (\x -> [(fst x, (concat (snd x)))])
+
+cincomilNumeros :: [Int]
+cincomilNumeros = fst (foldr (\x y -> (app1 x y)) ([],1) [1..5000])
+
+cincomilPalabras :: [String]
+cincomilPalabras = map (\x -> show x) cincomilNumeros
+
+cincomilMonumentos :: [(Structure, Dict String String)]
+cincomilMonumentos = foldr (\x y -> appMonument x y) [] cincomilNumeros
+
+app1 :: Int -> ([Int], Int) -> ([Int], Int)
+app1 x y = ((app2 (snd y)) (fst y) x, change (snd y) x)
+
+app2 :: Int -> ([Int] -> Int -> [Int])
+app2 1 = (\y x -> x:y)
+app2 2 = (\y x -> y++[(quot x 2)])
+app2 3 = (\y x -> y++[(quot x 5)])
+app2 4 = (\y x -> x:y)
+app2 5 = (\y x -> (quot x 2):y)
+app2 6 = (\y x -> (quot x 5):y)
+app2 7 = (\y x -> (quot x 7):y)
+app2 8 = (\y x -> (quot x 9):y)
+app2 9 = (\y x -> (quot x 17):y)
+app2 10 = (\y x -> y++[(quot x 17)])
+app2 11 = (\y x -> y++[(quot x 19)])
+app2 12 = (\y x -> y++[(quot x 7)])
+app2 13 = (\y x -> y++[(quot x 9)])
+app2 _ = (\y x -> (quot x 19):y)
+
+change :: Int -> Int -> Int
+change 0 x = 1
+change y x = (quot x y) `mod` 15
+
+appMonument :: Int -> [(Structure, Dict String String)] -> [(Structure, Dict String String)]
+appMonument x [] = [(Monument, [("name", show x)])] 
+appMonument x (y:ys) = if x `mod` 10 == 0 then (Monument, [("name", show x)]):(y:ys) else
+	if x `mod` 11 == 0 then (Street, [("name", show x)]):(y:ys) else if x `mod` 11 == 1 then (City, [("name", show x)]):(y:ys) else
+	if not ((snd y) ? "country") then (fst y, ("country", show (x `mod` 10)):(snd y)):ys else if not ((snd y) ? "latlong") then (fst y, ("latlong", show x):(snd y)):ys else
+	(Monument, [("name", show x)]):(y:ys)
+
+map5000 :: Mapper Int Int Bool
+map5000 = (\x -> [(x, True)])
+
+reduce5000 :: Reducer Int Bool Int
+reduce5000 = (\x -> [fst x])
+
+dobleInclusion :: [Int] -> [Int] -> Bool
+dobleInclusion src dst = (foldr (\x y -> y && (elem x src)) True dst) && (foldr (\x y -> y && (elem x dst)) True src)
+
+enOrden :: [Int] -> Bool
+enOrden l = snd (foldl (\y x -> (x, (x >= fst y) && (snd y))) (0, True) l)
+
+dobleInclusionPares :: [String] -> Dict String Int -> Bool
+dobleInclusionPares src dst = (foldr (\x y -> y && (dst ? x)) True src) && (foldr (\x y -> y && (elem (fst x) src)) True dst)
+
+cantidadesCorrectas :: [String] -> Dict String Int -> Bool
+cantidadesCorrectas src = foldr (\x y -> y && (cantOcur (fst x) src == snd x)) True
+
+cantOcur :: String -> [String] -> Int
+cantOcur s = foldr (\x y -> y + if x==s then 1 else 0) 0
+
+cantOcurCountry :: String -> [(Structure, Dict String String)] -> Int
+cantOcurCountry s = foldr (\x y -> y + if ((snd x) ? "country") && (((snd x) ! "country") == s) then 1 else 0) 0
+
+tuplaTop :: Int -> (Int, Bool) -> (Int,Bool)
+tuplaTop x y = (x, snd y && (x >= fst y))
+
+filtrarMonumentos :: [(Structure, Dict String String)]
+filtrarMonumentos = foldr (\x y -> if esMonumento (fst x) then x:y else y) [] cincomilMonumentos
+
+esMonumento :: Structure -> Bool
+esMonumento Monument = True
+esMonumento _ = False
