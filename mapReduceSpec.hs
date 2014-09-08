@@ -139,7 +139,7 @@ main = hspec $ do
       monumentosTop paises !! 0                                       `shouldBe` "Argentina"
       monumentosTop paises                                            `shouldSatisfy` (\r -> (r !! 1 == "Brasil" && r !! 2 == "Japon") || (r !! 1 == "Japon" && r !! 2 == "Brasil"))
       drop 3 (monumentosTop paises)                                   `shouldMatchList` ["Uruguay","Alemania","Australia"]
-      -monumentosTop cincomilPalabras                                  `shouldSatisfy` (\r -> (\l -> snd (foldr (\x y -> tuplaTop (cantOcur x l) y) (0,True) r)) cincomilPalabras)
+      monumentosTop cincomilPalabras                                  `shouldSatisfy` (\r -> (\l -> snd (foldr (\x y -> tuplaTop (cantOcur x l) y) (0,True) r)) cincomilPalabras)
 
     it "monumentosPorPais" $ do
       -- Ej13
