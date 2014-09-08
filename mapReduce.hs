@@ -216,7 +216,7 @@ monumentosPorPais = mapReduce auxMapper (\x -> [(fst x, foldr1 (+) (snd x))])
 	-- Función auxiliar 'auxMapper'. Agrega una tupla con el atributo 'country' si y solo si
 	-- el elemento es de tipo 'Monument'
 auxMapper :: Mapper (Structure, Dict String String) String Int
-auxMapper (Monument, x) = [((x ! "country"), 1)]
+auxMapper (Monument, x) = if (x ? "country") then [((x ! "country"), 1)] else []
 auxMapper _ = []
 -- /Resolución 13
 
